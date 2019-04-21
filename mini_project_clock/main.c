@@ -9,10 +9,12 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <stdio.h>
+#include <avr/eeprom.h>
 #include "I2C.h"
 #include "I2C_LCD.h"
 #include "CLCD.h"
 #include "UART0.h"
+#include "key_matrix.h"
 
 FILE OUTPUT = FDEV_SETUP_STREAM(UART0_transmit, NULL, _FDEV_SETUP_WRITE);
 FILE INPUT = FDEV_SETUP_STREAM(NULL, UART0_receive, _FDEV_SETUP_READ);
@@ -104,6 +106,8 @@ int main(void){
 	
 	DDRE = 0x00;
 	PORTE = 0x60;
+	DDRF = 0xF0;
+	PORTF = 0xFF;
 	
 	UART0_init();
 	stdout = &OUTPUT;
@@ -115,6 +119,7 @@ int main(void){
 
 	
 	while(1){
+		key_process();
 		if(mode_change == 1){
 			LCD_clear();
 			mode_change = 0;
