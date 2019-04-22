@@ -30,7 +30,7 @@ volatile int clock_val = 0;
 volatile int stop_ms = 0, stop_ss = 0, stop_mm = 0;
 volatile uint8_t hh = 12, mm = 0, ss = 0;
 volatile uint8_t year = 19, month = 4, day = 21;
-volatile uint8_t mode = 0;		//0 : 시간출력, 1 : 스탑워치, 2 : 알람
+volatile uint8_t mode = 0;		//0 : 시간출력, 1 : 세계시간 2 : 스탑워치, 3 : 알람
 volatile uint8_t mode_change = 0;
 volatile uint8_t stop_watch_flag = 0, time_print_flag = 0, alarm_set_flag = 0, alarm_flag = 0;		//모드설정 플래그
 volatile uint8_t position_cur = 1;
@@ -74,17 +74,17 @@ ISR(TIMER0_COMP_vect){
 ISR(INT4_vect){		//모드버튼
 	if(alarm_set_flag != 1){
 		mode++;
-		mode = mode % 3;
+		mode = mode % 4;
 		printf("mode : %d\n", mode);
 		mode_change = 1;
 	}
 }
 
 ISR(INT5_vect){
-	if(mode == 1){
+	if(mode == 2){
 		stop_watch_flag ^= 0x01;
 	}
-	else if((mode == 2) && (alarm_set_flag == 1)){
+	else if((mode == 3) && (alarm_set_flag == 1)){
 		printf("alaram time increase.\n");
 		alarm_set();	
 		printf("hh : %d  mm : %d  ss : %d\n", alarm_1.hh, alarm_1.mm, alarm_1.ss);
@@ -92,12 +92,12 @@ ISR(INT5_vect){
 }
 
 ISR(INT6_vect){
-	if((mode == 1) && (stop_watch_flag == 0)){
+	if((mode == 2) && (stop_watch_flag == 0)){
 		stop_mm = 0;
 		stop_ss = 0;
 		stop_ms = 0;
 	}
-	else if((mode == 2) && (alarm_set_flag == 1)){
+	else if((mode == 3) && (alarm_set_flag == 1)){
 		position_cur += 3;
 		if(position_cur > 7)
 			position_cur = 1;
@@ -107,7 +107,7 @@ ISR(INT6_vect){
 }
 
 ISR(INT7_vect){	
-	if(mode == 2){
+	if(mode == 3){
 		if(alarm_set_flag == 1){
 			eeprom_update_block((alarm *)&alarm_1, (int *)0, sizeof(alarm));		//알람화면에서 3번 버튼을 누르면, 현재 알람시간이 저장됨.
 		}
@@ -137,21 +137,33 @@ void TIMER0_init(void){			//1ms마다 인터럽트 발생
 void print_LCD(int select){
 	char buff[20] = {0};
 	if(select == 0){
-		LCD_goto_XY(0, 3);
-		sprintf(buff, "%2d.%2d.%2d", year, month, day);
+		LCD_goto_XY(0, 2);
+		LCD_write_string("KOR");
+		LCD_goto_XY(0, 6);
+		sprintf(buff, "%02d.%02d.%02d", year, month, day);
 		LCD_write_string(buff);
-		LCD_goto_XY(1, 0);
+		LCD_goto_XY(1, 4);
 		sprintf(buff, "%02d:%02d:%02d", hh, mm, ss);
 		LCD_write_string(buff);
 	}
 	else if(select == 1){
+		LCD_goto_XY(0, 2);
+		LCD_write_string("KOR");
+		LCD_goto_XY(0, 6);
+		sprintf(buff, "%02d.%02d.%02d", year, month, day);
+		LCD_write_string(buff);
+		LCD_goto_XY(1, 4);
+		sprintf(buff, "%02d:%02d:%02d", hh, mm, ss);
+		LCD_write_string(buff);
+	}
+	else if(select == 2){
 		LCD_goto_XY(0, 0);
 		LCD_write_string("ALARM");
 		LCD_goto_XY(1, 0);
 		sprintf(buff, "%02d:%02d:%02d", alarm_1.hh, alarm_1.mm, alarm_1.ss);
 		LCD_write_string(buff);
 	}
-	else if(select == 2){
+	else if(select == 3){
 		LCD_goto_XY(0, 0);
 		LCD_write_string("ALARM SETTING");
 		LCD_goto_XY(1, 0);
@@ -172,7 +184,7 @@ void read_alarm(){
 void alarm_process(){
 	while(alarm_set_flag == 1){
 		LCD_write_command(0x0F);
-		print_LCD(2);
+		print_LCD(3);
 		LCD_goto_XY(1, 1);
 		while(alarm_set_flag == 1);
 		LCD_goto_XY(0, 0);
@@ -238,13 +250,17 @@ int main(void){
 			print_LCD(0);
 			time_print_flag = 0;
 		}
-		else if(mode == 1){		//스탑워치 출력
+		else if(mode == 1){
+			print_LCD(1);
+			time_print_flag = 0;
+		}
+		else if(mode == 2){		//스탑워치 출력
 			LCD_goto_XY(1, 0);
 			sprintf(buff,"%4d %4d %4d", stop_mm, stop_ss, stop_ms);
 			LCD_write_string(buff);
 		}
-		else if(mode== 2){		//알람 출력
-			print_LCD(1);
+		else if(mode== 3){		//알람 출력
+			print_LCD(2);
 			alarm_process();
 		}
 	}
