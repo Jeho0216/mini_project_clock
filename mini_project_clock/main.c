@@ -225,6 +225,7 @@ int main(void){
 	TIMER0_init();
 	I2C_LCD_init();
 	LCD_init();
+	read_alarm();
 
 	while(1){
 		key_process();
