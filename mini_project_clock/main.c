@@ -30,7 +30,7 @@ typedef enum world_time{SEL = 0, TYO, LON, NYC} world_time;
 volatile int count = 0;
 volatile int clock_val = 0;
 volatile int stop_ms = 0, stop_ss = 0, stop_mm = 0;
-volatile uint8_t hh = 22, mm = 0, ss = 0;
+volatile uint8_t hh = 0, mm = 0, ss = 1;
 volatile uint8_t country_1 = LON, country_2 = SEL;
 volatile uint8_t year = 19, month = 4, day = 21;
 volatile uint8_t mode = 0;		//0 : 시간출력, 1 : 세계시간 2 : 스탑워치, 3 : 알람
@@ -132,29 +132,41 @@ ISR(INT6_vect){
 		LCD_goto_XY(position_cur_2, position_cur);
 	}
 }
-//설정 버튼.
+//각종 setting모드 진입 버튼, 알람 끄기 버튼.
 ISR(INT7_vect){
 	if(mode == 3){
 		if(alarm_set_flag == 1){
 			eeprom_update_block((alarm *)&alarm_1, (int *)0, sizeof(alarm));		//알람화면에서 3번 버튼을 누르면, 현재 알람시간이 저장됨.
 		}
 		alarm_set_flag ^= 0x01;		//플래그 반복.
+		printf("alarm set flag : %d\n", alarm_set_flag);
 	}
 	else if(alarm_flag == 1){		//알람 끄기.
+		TCCR3A &= ~(1 << COM3A0);
 		alarm_flag = 0;
+		printf("alarm flag : %d\n", alarm_flag);
 	}
 	else if(mode == 0){
 		time_set_flag ^= 0x01;
+		printf("time set flag : %d\n", time_set_flag);
 	}
 	else if(mode == 1){
 		time_set_flag ^= 0x01;
+		printf("time set flag : %d\n", time_set_flag);
 	}
-	printf("alarm set flag : %d\n", alarm_set_flag);
+	
 }
 //초기화 함수
 void INT_init(){
 	EIMSK |= (1 << INT4) | (1 << INT5) | (1 << INT6) | (1 << INT7);
 	EICRB |= (1 << ISC41) | (1 << ISC51) | (1 << ISC61) | (1 << ISC71);
+	
+	DDRE |= (1 << PORTE3);
+	PORTE = 0x00;
+	
+	//TCCR3A |= (1 << COM3A0);
+	TCCR3B |= (1 << WGM32) | (1 << CS32);
+	OCR3A = 523;
 }
 
 void TIMER0_init(void){			//1ms마다 인터럽트 발생
@@ -387,6 +399,7 @@ void alarm_process(){
 		LCD_write_command(0x0F);
 		print_LCD(3);
 		LCD_goto_XY(1, 1);
+		position_cur = 1;
 		while(alarm_set_flag == 1);
 		LCD_goto_XY(0, 0);
 		LCD_write_string("ALARM          ");
@@ -398,7 +411,7 @@ void alarm_set(){
 	switch(position_cur){		//커서위치에 따라 변경할 값을 결정.
 		case 1:
 			alarm_1.hh++;
-			if(alarm_1.hh > 12)
+			if(alarm_1.hh > 24)
 			alarm_1.hh = 0;
 		break;
 		case 4:
@@ -417,8 +430,23 @@ void alarm_set(){
 }
 //알람 실행 조건 검사함수.
 void check_alarm(){
-	if((alarm_1.hh == hh) && (alarm_1.mm == mm) && (alarm_1.ss == ss)){		//알람시간과 현재시간이 일치할 경우,
+	uint8_t temp_hh = hh;
+	switch(country_1){
+		case TYO :
+		case SEL : 
+			temp_hh += 8;
+			if(temp_hh >= 24)
+				temp_hh -= 24;
+		break;
+		case NYC :
+			temp_hh += 11;
+			if(temp_hh >= 24)
+				temp_hh -= 24;
+		break;
+	}
+	if(((alarm_1.hh == temp_hh) && (alarm_1.mm == mm) && (alarm_1.ss == ss)) || (alarm_flag == 1)){		//알람시간과 현재시간이 일치할 경우,
 		printf("alarm! alarm! alarm!\n");
+		TCCR3A |= (1 << COM3A0);
 		alarm_flag = 1;
 	}
 }
