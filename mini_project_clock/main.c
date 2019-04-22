@@ -99,7 +99,7 @@ ISR(INT5_vect){
 	}
 	else if(((mode == 0) || (mode == 1)) && (time_set_flag == 1)){
 		printf("time time increase\n");
-		printf("mode = %d, position_cur = %d\n", mode, position_cur);
+		printf("mode = %d, position_cur = %d position_cur_2 = %d\n", mode, position_cur, position_cur_2);
 		time_set(mode);
 		printf("hh : %d mm : %d ss : %d\n", hh, mm, ss);
 	}
@@ -211,6 +211,7 @@ void time_set_process(){
 	while(time_set_flag == 1){
 		LCD_write_command(0x0F);
 		position_cur = 4;
+		position_cur_2 = 0;
 		LCD_goto_XY(0, position_cur);
 		while(time_set_flag == 1);
 		LCD_goto_XY(0, 0);
@@ -228,7 +229,7 @@ void calc_time(int time_num, char buff[]){
 				LCD_goto_XY(0, 2);
 				LCD_write_string("SEL");
 				temp_hh += 8;
-				if(temp_hh > 24){
+				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
@@ -242,7 +243,7 @@ void calc_time(int time_num, char buff[]){
 				LCD_goto_XY(0, 2);
 				LCD_write_string("TYO");
 				temp_hh += 8;
-				if(temp_hh > 24){
+				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
@@ -266,7 +267,7 @@ void calc_time(int time_num, char buff[]){
 				LCD_goto_XY(0, 2);
 				LCD_write_string("NYC");
 				temp_hh += 11;
-				if(temp_hh > 24){
+				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
@@ -284,7 +285,7 @@ void calc_time(int time_num, char buff[]){
 				LCD_goto_XY(0, 2);
 				LCD_write_string("SEL");
 				temp_hh += 8;
-				if(temp_hh > 24){
+				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
@@ -298,7 +299,7 @@ void calc_time(int time_num, char buff[]){
 				LCD_goto_XY(0, 2);
 				LCD_write_string("TYO");
 				temp_hh += 8;
-				if(temp_hh > 24){
+				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
@@ -322,7 +323,7 @@ void calc_time(int time_num, char buff[]){
 				LCD_goto_XY(0, 2);
 				LCD_write_string("NYC");
 				temp_hh += 11;
-				if(temp_hh > 24){
+				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
@@ -486,7 +487,7 @@ int main(void){
 			time_set_process();
 		}
 		else if(mode == 2){		//스탑워치 출력
-			LCD_goto_XY(0, 1);
+			LCD_goto_XY(0, 0);
 			LCD_write_string("STOP WATCH");
 			LCD_goto_XY(1, 0);
 			sprintf(buff,"%4d %4d %4d", stop_mm, stop_ss, stop_ms);
