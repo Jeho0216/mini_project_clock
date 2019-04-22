@@ -25,35 +25,42 @@ typedef struct alarm{
 	uint8_t ss;
 }alarm;
 
+typedef enum world_time{SEL = 0, TYO, LON, NYC} world_time;
+
 volatile int count = 0;
 volatile int clock_val = 0;
 volatile int stop_ms = 0, stop_ss = 0, stop_mm = 0;
-volatile uint8_t hh = 12, mm = 0, ss = 0;
+volatile uint8_t hh = 22, mm = 0, ss = 0;
+volatile uint8_t country_1 = LON, country_2 = SEL;
 volatile uint8_t year = 19, month = 4, day = 21;
 volatile uint8_t mode = 0;		//0 : 시간출력, 1 : 세계시간 2 : 스탑워치, 3 : 알람
 volatile uint8_t mode_change = 0;
-volatile uint8_t stop_watch_flag = 0, time_print_flag = 0, alarm_set_flag = 0, alarm_flag = 0;		//모드설정 플래그
-volatile uint8_t position_cur = 1;
+volatile uint8_t stop_watch_flag = 0, time_print_flag = 0, time_set_flag = 0, alarm_set_flag = 0, alarm_flag = 0;		//모드설정 플래그
+volatile uint8_t position_cur = 1, position_cur_2 = 0;
 alarm alarm_1;
 
 void alarm_set();
+void time_set(int time_num);
+void calc_time(int time_num, char buff[]);
 //ISR 정의
 ISR(TIMER0_COMP_vect){
-	count++;
-	if(count >= 1000){		//1초 경과시
-		count = 0;
-		if(stop_watch_flag != 1)
-		time_print_flag = 1;
-		ss++;
-		if(ss >= 60){
-			mm++;
-			ss = 0;
-			if(mm >= 60){
-				hh++;
-				mm = 0;
-				if(hh >= 24){
-					day++;
-					hh = 0;
+	if(time_print_flag == 0){
+		count++;
+		if(count >= 1000){		//1초 경과시
+			count = 0;
+			if(stop_watch_flag != 1)
+			time_print_flag = 1;
+			ss++;
+			if(ss >= 60){
+				mm++;
+				ss = 0;
+				if(mm >= 60){
+					hh++;
+					mm = 0;
+					if(hh >= 24){
+						day++;
+						hh = 0;
+					}
 				}
 			}
 		}
@@ -72,22 +79,29 @@ ISR(TIMER0_COMP_vect){
 }
 
 ISR(INT4_vect){		//모드버튼
-	if(alarm_set_flag != 1){
+	if(alarm_set_flag != 1 && time_set_flag != 1){
 		mode++;
 		mode = mode % 4;
 		printf("mode : %d\n", mode);
 		mode_change = 1;
 	}
 }
-
+//시간증가 버튼
 ISR(INT5_vect){
 	if(mode == 2){
 		stop_watch_flag ^= 0x01;
 	}
+
 	else if((mode == 3) && (alarm_set_flag == 1)){
 		printf("alaram time increase.\n");
-		alarm_set();	
+		alarm_set();
 		printf("hh : %d  mm : %d  ss : %d\n", alarm_1.hh, alarm_1.mm, alarm_1.ss);
+	}
+	else if(((mode == 0) || (mode == 1)) && (time_set_flag == 1)){
+		printf("time time increase\n");
+		printf("mode = %d, position_cur = %d\n", mode, position_cur);
+		time_set(mode);
+		printf("hh : %d mm : %d ss : %d\n", hh, mm, ss);
 	}
 }
 
@@ -100,21 +114,40 @@ ISR(INT6_vect){
 	else if((mode == 3) && (alarm_set_flag == 1)){
 		position_cur += 3;
 		if(position_cur > 7)
-			position_cur = 1;
-		printf("position move : %d\n", position_cur);
+		position_cur = 1;
+		printf("alarm position move : %d\n", position_cur);
 		LCD_goto_XY(1, position_cur);
 	}
+	else if(((mode == 0) || (mode == 1)) && (time_set_flag == 1)){
+		position_cur +=3;
+		if(position_cur == 16){
+			position_cur = 5;
+			position_cur_2 = 1;
+		}
+		if(position_cur == 14){
+			position_cur = 4;
+			position_cur_2 = 0;
+		}
+		printf("time position move : %d\n", position_cur);
+		LCD_goto_XY(position_cur_2, position_cur);
+	}
 }
-
-ISR(INT7_vect){	
+//설정 버튼.
+ISR(INT7_vect){
 	if(mode == 3){
 		if(alarm_set_flag == 1){
 			eeprom_update_block((alarm *)&alarm_1, (int *)0, sizeof(alarm));		//알람화면에서 3번 버튼을 누르면, 현재 알람시간이 저장됨.
 		}
 		alarm_set_flag ^= 0x01;		//플래그 반복.
 	}
-	else if(alarm_flag == 1){
+	else if(alarm_flag == 1){		//알람 끄기.
 		alarm_flag = 0;
+	}
+	else if(mode == 0){
+		time_set_flag ^= 0x01;
+	}
+	else if(mode == 1){
+		time_set_flag ^= 0x01;
 	}
 	printf("alarm set flag : %d\n", alarm_set_flag);
 }
@@ -137,23 +170,13 @@ void TIMER0_init(void){			//1ms마다 인터럽트 발생
 void print_LCD(int select){
 	char buff[20] = {0};
 	if(select == 0){
-		LCD_goto_XY(0, 2);
-		LCD_write_string("KOR");
-		LCD_goto_XY(0, 6);
-		sprintf(buff, "%02d.%02d.%02d", year, month, day);
-		LCD_write_string(buff);
+		calc_time(0, buff);
 		LCD_goto_XY(1, 4);
-		sprintf(buff, "%02d:%02d:%02d", hh, mm, ss);
 		LCD_write_string(buff);
 	}
 	else if(select == 1){
-		LCD_goto_XY(0, 2);
-		LCD_write_string("KOR");
-		LCD_goto_XY(0, 6);
-		sprintf(buff, "%02d.%02d.%02d", year, month, day);
-		LCD_write_string(buff);
+		calc_time(1, buff);
 		LCD_goto_XY(1, 4);
-		sprintf(buff, "%02d:%02d:%02d", hh, mm, ss);
 		LCD_write_string(buff);
 	}
 	else if(select == 2){
@@ -171,6 +194,184 @@ void print_LCD(int select){
 		LCD_write_string(buff);
 	}
 }
+
+void time_set_process(){
+	while(time_set_flag == 1){
+		LCD_write_command(0x0F);
+		position_cur = 4;
+		LCD_goto_XY(0, position_cur);
+		while(time_set_flag == 1);
+		LCD_goto_XY(0, 0);
+		LCD_write_command(0x0C);
+	}
+}
+//도시별 시간 계산
+void calc_time(int time_num, char buff[]){
+	int temp_hh = hh;
+	int temp_day = day;
+	
+	if(time_num == 0){
+		switch(country_1){
+			case SEL :		//서울
+				LCD_goto_XY(0, 2);
+				LCD_write_string("SEL");
+				temp_hh += 8;
+				if(temp_hh > 24){
+					temp_day++;
+					temp_hh -= 24;
+				}
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+			case TYO :		//도쿄
+				LCD_goto_XY(0, 2);
+				LCD_write_string("TYO");
+				temp_hh += 8;
+				if(temp_hh > 24){
+					temp_day++;
+					temp_hh -= 24;
+				}
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+			case LON :		//런던
+				LCD_goto_XY(0, 2);
+				LCD_write_string("LON");
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+			case NYC :		//뉴욕
+				LCD_goto_XY(0, 2);
+				LCD_write_string("NYC");
+				temp_hh += 11;
+				if(temp_hh > 24){
+					temp_day++;
+					temp_hh -= 24;
+				}
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+		}
+	}
+	else if(time_num == 1){
+		switch(country_2){
+			case SEL :		//서울
+				LCD_goto_XY(0, 2);
+				LCD_write_string("SEL");
+				temp_hh += 8;
+				if(temp_hh > 24){
+					temp_day++;
+					temp_hh -= 24;
+				}
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+			case TYO :		//도쿄
+				LCD_goto_XY(0, 2);
+				LCD_write_string("TYO");
+				temp_hh += 8;
+				if(temp_hh > 24){
+					temp_day++;
+					temp_hh -= 24;
+				}
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+			case LON :		//런던
+				LCD_goto_XY(0, 2);
+				LCD_write_string("LON");
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+			case NYC :		//뉴욕
+				LCD_goto_XY(0, 2);
+				LCD_write_string("NYC");
+				temp_hh += 11;
+				if(temp_hh > 24){
+					temp_day++;
+					temp_hh -= 24;
+				}
+				LCD_goto_XY(0, 6);
+				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				LCD_write_string(buff);
+				LCD_goto_XY(1, 4);
+				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			break;
+		}
+	}
+}
+
+
+void time_set(int time_num){
+	switch(position_cur){		//커서위치에 따라 변경할 값을 결정.
+		case 4:
+			if(time_num == 0){
+				country_1++;
+				country_1 = country_1 % 4;
+			}
+			else if(time_num == 1){
+				country_2++;
+				country_2 = country_2 % 4;	
+			}
+		break;
+		case 7:
+			year++;
+		break;
+		case 10:
+			month++;
+			if(month > 12)
+				month = 1;
+		break;
+		case 13:
+			day++;
+			if(day > 31)
+				day = 1;
+		break;
+		case 5:
+			hh++;
+			if(hh > 24)
+				hh = 0;
+		break;
+		case 8:
+			mm++;
+			if(mm > 60)
+				mm = 0;
+		break;
+		case 11:
+			ss++;
+			if(ss > 60)
+				ss = 0;
+		break;
+	}
+	if(time_num == 0)		print_LCD(0);
+	else if(time_num == 1)	print_LCD(1);
+	printf("country : %d\n", country_1);
+	LCD_goto_XY(position_cur_2, position_cur);
+}
+
 //알람 읽기(EEPROM)
 void read_alarm(){
 	eeprom_read_block((alarm *)&alarm_1, (int *)0, sizeof(alarm));		//알람화면에서 3번 버튼을 누르면, 현재 알람시간이 저장됨.
@@ -199,17 +400,17 @@ void alarm_set(){
 			alarm_1.hh++;
 			if(alarm_1.hh > 12)
 			alarm_1.hh = 0;
-			break;
+		break;
 		case 4:
 			alarm_1.mm++;
 			if(alarm_1.mm > 60)
 			alarm_1.mm = 0;
-			break;
+		break;
 		case 7:
 			alarm_1.ss++;
 			if(alarm_1.ss > 60)
 			alarm_1.ss = 0;
-			break;
+		break;
 	}
 	print_LCD(2);
 	LCD_goto_XY(1, position_cur);
@@ -248,11 +449,13 @@ int main(void){
 		}
 		if(mode == 0){		//시간출력
 			print_LCD(0);
-			time_print_flag = 0;
+			time_print_flag = 0;		//1초에 한번 출력하기 위한 변수.
+			time_set_process();
 		}
-		else if(mode == 1){
+		else if(mode == 1){		//세계시간 출력
 			print_LCD(1);
 			time_print_flag = 0;
+			time_set_process();
 		}
 		else if(mode == 2){		//스탑워치 출력
 			LCD_goto_XY(1, 0);
