@@ -225,112 +225,112 @@ void calc_time(int time_num, char buff[]){
 	if(time_num == 0){
 		switch(country_1){
 			case SEL :		//서울
-				LCD_goto_XY(0, 2);
-				LCD_write_string("SEL");
-				temp_hh += 8;
-				if(temp_hh > 24){
-					temp_day++;
-					temp_hh -= 24;
-				}
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("SEL");
+			temp_hh += 8;
+			if(temp_hh > 24){
+				temp_day++;
+				temp_hh -= 24;
+			}
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case TYO :		//도쿄
-				LCD_goto_XY(0, 2);
-				LCD_write_string("TYO");
-				temp_hh += 8;
-				if(temp_hh > 24){
-					temp_day++;
-					temp_hh -= 24;
-				}
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("TYO");
+			temp_hh += 8;
+			if(temp_hh > 24){
+				temp_day++;
+				temp_hh -= 24;
+			}
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case LON :		//런던
-				LCD_goto_XY(0, 2);
-				LCD_write_string("LON");
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("LON");
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case NYC :		//뉴욕
-				LCD_goto_XY(0, 2);
-				LCD_write_string("NYC");
-				temp_hh += 11;
-				if(temp_hh > 24){
-					temp_day++;
-					temp_hh -= 24;
-				}
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("NYC");
+			temp_hh += 11;
+			if(temp_hh > 24){
+				temp_day++;
+				temp_hh -= 24;
+			}
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 		}
 	}
 	else if(time_num == 1){
 		switch(country_2){
 			case SEL :		//서울
-				LCD_goto_XY(0, 2);
-				LCD_write_string("SEL");
-				temp_hh += 8;
-				if(temp_hh > 24){
-					temp_day++;
-					temp_hh -= 24;
-				}
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("SEL");
+			temp_hh += 8;
+			if(temp_hh > 24){
+				temp_day++;
+				temp_hh -= 24;
+			}
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case TYO :		//도쿄
-				LCD_goto_XY(0, 2);
-				LCD_write_string("TYO");
-				temp_hh += 8;
-				if(temp_hh > 24){
-					temp_day++;
-					temp_hh -= 24;
-				}
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("TYO");
+			temp_hh += 8;
+			if(temp_hh > 24){
+				temp_day++;
+				temp_hh -= 24;
+			}
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case LON :		//런던
-				LCD_goto_XY(0, 2);
-				LCD_write_string("LON");
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("LON");
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case NYC :		//뉴욕
-				LCD_goto_XY(0, 2);
-				LCD_write_string("NYC");
-				temp_hh += 11;
-				if(temp_hh > 24){
-					temp_day++;
-					temp_hh -= 24;
-				}
-				LCD_goto_XY(0, 6);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
-				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
+			LCD_goto_XY(0, 2);
+			LCD_write_string("NYC");
+			temp_hh += 11;
+			if(temp_hh > 24){
+				temp_day++;
+				temp_hh -= 24;
+			}
+			LCD_goto_XY(0, 6);
+			sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+			LCD_write_string(buff);
+			LCD_goto_XY(1, 4);
+			sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 		}
 	}
@@ -340,42 +340,42 @@ void calc_time(int time_num, char buff[]){
 void time_set(int time_num){
 	switch(position_cur){		//커서위치에 따라 변경할 값을 결정.
 		case 4:
-			if(time_num == 0){
-				country_1++;
-				country_1 = country_1 % 4;
-			}
-			else if(time_num == 1){
-				country_2++;
-				country_2 = country_2 % 4;	
-			}
+		if(time_num == 0){
+			country_1++;
+			country_1 = country_1 % 4;
+		}
+		else if(time_num == 1){
+			country_2++;
+			country_2 = country_2 % 4;
+		}
 		break;
 		case 7:
-			year++;
+		year++;
 		break;
 		case 10:
-			month++;
-			if(month > 12)
-				month = 1;
+		month++;
+		if(month > 12)
+		month = 1;
 		break;
 		case 13:
-			day++;
-			if(day > 31)
-				day = 1;
+		day++;
+		if(day > 31)
+		day = 1;
 		break;
 		case 5:
-			hh++;
-			if(hh > 24)
-				hh = 0;
+		hh++;
+		if(hh > 24)
+		hh = 0;
 		break;
 		case 8:
-			mm++;
-			if(mm > 60)
-				mm = 0;
+		mm++;
+		if(mm > 60)
+		mm = 0;
 		break;
 		case 11:
-			ss++;
-			if(ss > 60)
-				ss = 0;
+		ss++;
+		if(ss > 60)
+		ss = 0;
 		break;
 	}
 	if(time_num == 0)		print_LCD(0);
@@ -410,19 +410,19 @@ void alarm_process(){
 void alarm_set(){
 	switch(position_cur){		//커서위치에 따라 변경할 값을 결정.
 		case 1:
-			alarm_1.hh++;
-			if(alarm_1.hh > 24)
-			alarm_1.hh = 0;
+		alarm_1.hh++;
+		if(alarm_1.hh > 24)
+		alarm_1.hh = 0;
 		break;
 		case 4:
-			alarm_1.mm++;
-			if(alarm_1.mm > 60)
-			alarm_1.mm = 0;
+		alarm_1.mm++;
+		if(alarm_1.mm > 60)
+		alarm_1.mm = 0;
 		break;
 		case 7:
-			alarm_1.ss++;
-			if(alarm_1.ss > 60)
-			alarm_1.ss = 0;
+		alarm_1.ss++;
+		if(alarm_1.ss > 60)
+		alarm_1.ss = 0;
 		break;
 	}
 	print_LCD(2);
@@ -433,15 +433,15 @@ void check_alarm(){
 	uint8_t temp_hh = hh;
 	switch(country_1){
 		case TYO :
-		case SEL : 
-			temp_hh += 8;
-			if(temp_hh >= 24)
-				temp_hh -= 24;
+		case SEL :
+		temp_hh += 8;
+		if(temp_hh >= 24)
+		temp_hh -= 24;
 		break;
 		case NYC :
-			temp_hh += 11;
-			if(temp_hh >= 24)
-				temp_hh -= 24;
+		temp_hh += 11;
+		if(temp_hh >= 24)
+		temp_hh -= 24;
 		break;
 	}
 	if(((alarm_1.hh == temp_hh) && (alarm_1.mm == mm) && (alarm_1.ss == ss)) || (alarm_flag == 1)){		//알람시간과 현재시간이 일치할 경우,
