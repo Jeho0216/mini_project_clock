@@ -44,12 +44,12 @@ void time_set(int time_num);
 void calc_time(int time_num, char buff[]);
 //ISR 정의
 ISR(TIMER0_COMP_vect){
-	if(time_print_flag == 0){
+	if(time_set_flag == 0){
 		count++;
 		if(count >= 1000){		//1초 경과시
 			count = 0;
 			if(stop_watch_flag != 1)
-			time_print_flag = 1;
+				time_print_flag = 1;
 			ss++;
 			if(ss >= 60){
 				mm++;
@@ -464,8 +464,8 @@ int main(void){
 	stdin = &INPUT;
 	INT_init();
 	TIMER0_init();
-	I2C_LCD_init();
 	LCD_init();
+	I2C_LCD_init();
 	read_alarm();
 
 	while(1){
@@ -486,6 +486,8 @@ int main(void){
 			time_set_process();
 		}
 		else if(mode == 2){		//스탑워치 출력
+			LCD_goto_XY(0, 1);
+			LCD_write_string("STOP WATCH");
 			LCD_goto_XY(1, 0);
 			sprintf(buff,"%4d %4d %4d", stop_mm, stop_ss, stop_ms);
 			LCD_write_string(buff);
