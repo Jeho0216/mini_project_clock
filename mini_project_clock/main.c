@@ -37,6 +37,9 @@ volatile uint8_t mode = 0;		//0 : 시간출력, 1 : 세계시간 2 : 스탑워�
 volatile uint8_t mode_change = 0;
 volatile uint8_t stop_watch_flag = 0, time_print_flag = 0, time_set_flag = 0, alarm_set_flag = 0, alarm_flag = 0;		//모드설정 플래그
 volatile uint8_t position_cur = 1, position_cur_2 = 0;
+
+const int month_end_day[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
 alarm alarm_1;
 
 void alarm_set();
@@ -59,6 +62,14 @@ ISR(TIMER0_COMP_vect){
 					mm = 0;
 					if(hh >= 24){
 						day++;
+						if(day > month_end_day[month - 1]){
+							day = 1;
+							month++;
+							if(month > 12){
+								month = 1;
+								year++;
+							}
+						}
 						hh = 0;
 					}
 				}
@@ -236,10 +247,13 @@ void time_set_process(){
 		LCD_write_command(0x0C);
 	}
 }
+
 //도시별 시간 계산
 void calc_time(int time_num, char buff[]){
 	int temp_hh = hh;
 	int temp_day = day;
+	int temp_month = month;
+	int temp_year = year;
 	
 	if(time_num == 0){
 		switch(country_1){
@@ -249,23 +263,38 @@ void calc_time(int time_num, char buff[]){
 				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
+					if(temp_day > month_end_day[temp_month - 1]){
+						temp_day = 0;
+						temp_month++;
+						if(temp_month > 12){
+							temp_year++;
+							temp_month = 1;
+						}
+					}
 					temp_hh -= 24;
 				}
 				LCD_goto_XY(0, 8);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				sprintf(buff, "%02d.%02d.%02d", temp_year, temp_month, temp_day);
 				LCD_write_string(buff);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case TYO :		//도쿄
 				LCD_goto_XY(0, 4);
 				LCD_write_string("TYO");
-				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
+					if(temp_day > month_end_day[temp_month - 1]){
+						temp_day = 0;
+						temp_month++;
+						if(temp_month > 12){
+							temp_year++;
+							temp_month = 1;
+						}
+					}
 					temp_hh -= 24;
 				}
 				LCD_goto_XY(0, 8);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				sprintf(buff, "%02d.%02d.%02d", temp_year, temp_month, temp_day);
 				LCD_write_string(buff);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
@@ -283,10 +312,18 @@ void calc_time(int time_num, char buff[]){
 				temp_hh += 11;
 				if(temp_hh >= 24){
 					temp_day++;
+					if(temp_day > month_end_day[temp_month - 1]){
+						temp_day = 0;
+						temp_month++;
+						if(temp_month > 12){
+							temp_year++;
+							temp_month = 1;
+						}
+					}
 					temp_hh -= 24;
 				}
 				LCD_goto_XY(0, 8);
-				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
+				sprintf(buff, "%02d.%02d.%02d", temp_year, temp_month, temp_day);
 				LCD_write_string(buff);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
@@ -300,6 +337,14 @@ void calc_time(int time_num, char buff[]){
 				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
+					if(temp_day > month_end_day[temp_month - 1]){
+						temp_day = 0;
+						temp_month++;
+						if(temp_month > 12){
+							temp_year++;
+							temp_month = 1;
+						}
+					}
 					temp_hh -= 24;
 				}
 				LCD_goto_XY(0, 8);
@@ -313,6 +358,14 @@ void calc_time(int time_num, char buff[]){
 				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
+					if(temp_day > month_end_day[temp_month - 1]){
+						temp_day = 0;
+						temp_month++;
+						if(temp_month > 12){
+							temp_year++;
+							temp_month = 1;
+						}
+					}
 					temp_hh -= 24;
 				}
 				LCD_goto_XY(0, 8);
@@ -334,6 +387,14 @@ void calc_time(int time_num, char buff[]){
 				temp_hh += 11;
 				if(temp_hh >= 24){
 					temp_day++;
+					if(temp_day > month_end_day[temp_month - 1]){
+						temp_day = 0;
+						temp_month++;
+						if(temp_month > 12){
+							temp_year++;
+							temp_month = 1;
+						}
+					}
 					temp_hh -= 24;
 				}
 				LCD_goto_XY(0, 8);
@@ -367,7 +428,7 @@ void time_set(int time_num){
 		break;
 		case 13:
 			day++;
-			if(day > 31)
+			if(day > month_end_day[month - 1])
 				day = 1;
 		break;
 		case 5:
