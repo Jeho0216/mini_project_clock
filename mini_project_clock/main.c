@@ -27,7 +27,7 @@ typedef struct alarm{
 
 typedef enum world_time{SEL = 0, TYO, LON, NYC} world_time;
 
-volatile int count = 0;
+volatile int count = 0, count_alarm = 0, alarm_time = 0;
 volatile int clock_val = 0;
 volatile int stop_ms = 0, stop_ss = 0, stop_mm = 0;
 volatile uint8_t hh = 0, mm = 0, ss = 1;
@@ -74,6 +74,21 @@ ISR(TIMER0_COMP_vect){
 				stop_ss = 0;
 				stop_mm = 0;
 			}
+		}
+	}
+	if(alarm_flag == 1){
+		count_alarm++;
+		if(count_alarm >= 100){
+			alarm_time++;
+			if(alarm_time < 10)
+				OCR3A ^= 0x020B;
+			else{
+				OCR3A = 0x00;
+				if(alarm_time == 16)
+					alarm_time = 0;
+			}
+			printf("OCR3A : %X\nalarm_time : %d\n", OCR3A, alarm_time);
+			count_alarm = 0;
 		}
 	}
 }
@@ -129,7 +144,7 @@ ISR(INT6_vect){
 			position_cur_2 = 0;
 		}
 		printf("time position move : %d\n", position_cur);
-		LCD_goto_XY(position_cur_2, position_cur);
+		LCD_goto_XY(position_cur_2, position_cur + 2);
 	}
 }
 //각종 setting모드 진입 버튼, 알람 끄기 버튼.
@@ -164,9 +179,8 @@ void INT_init(){
 	DDRE |= (1 << PORTE3);
 	PORTE = 0x00;
 	
-	//TCCR3A |= (1 << COM3A0);
-	TCCR3B |= (1 << WGM32) | (1 << CS32);
-	OCR3A = 523;
+	TCCR3B |= (1 << WGM32) | (1 << CS31);		//분주비 256, CTC모드(OCR값이 TOP) -> CTC모드 50% PWM출력
+	OCR3A = 0x00;
 }
 
 void TIMER0_init(void){			//1ms마다 인터럽트 발생
@@ -182,13 +196,17 @@ void TIMER0_init(void){			//1ms마다 인터럽트 발생
 void print_LCD(int select){
 	char buff[20] = {0};
 	if(select == 0){
+		LCD_goto_XY(0, 0);
+		LCD_write_string("T1");
 		calc_time(0, buff);
-		LCD_goto_XY(1, 4);
+		LCD_goto_XY(1, 6);
 		LCD_write_string(buff);
 	}
 	else if(select == 1){
+		LCD_goto_XY(0, 0);
+		LCD_write_string("T2");
 		calc_time(1, buff);
-		LCD_goto_XY(1, 4);
+		LCD_goto_XY(1, 6);
 		LCD_write_string(buff);
 	}
 	else if(select == 2){
@@ -212,7 +230,7 @@ void time_set_process(){
 		LCD_write_command(0x0F);
 		position_cur = 4;
 		position_cur_2 = 0;
-		LCD_goto_XY(0, position_cur);
+		LCD_goto_XY(0, position_cur + 2);
 		while(time_set_flag == 1);
 		LCD_goto_XY(0, 0);
 		LCD_write_command(0x0C);
@@ -226,55 +244,50 @@ void calc_time(int time_num, char buff[]){
 	if(time_num == 0){
 		switch(country_1){
 			case SEL :		//서울
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("SEL");
 				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case TYO :		//도쿄
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("TYO");
 				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case LON :		//런던
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("LON");
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case NYC :		//뉴욕
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("NYC");
 				temp_hh += 11;
 				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 		}
@@ -282,61 +295,55 @@ void calc_time(int time_num, char buff[]){
 	else if(time_num == 1){
 		switch(country_2){
 			case SEL :		//서울
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("SEL");
 				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case TYO :		//도쿄
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("TYO");
 				temp_hh += 8;
 				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case LON :		//런던
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("LON");
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 			case NYC :		//뉴욕
-				LCD_goto_XY(0, 2);
+				LCD_goto_XY(0, 4);
 				LCD_write_string("NYC");
 				temp_hh += 11;
 				if(temp_hh >= 24){
 					temp_day++;
 					temp_hh -= 24;
 				}
-				LCD_goto_XY(0, 6);
+				LCD_goto_XY(0, 8);
 				sprintf(buff, "%02d.%02d.%02d", year, month, temp_day);
 				LCD_write_string(buff);
-				LCD_goto_XY(1, 4);
 				sprintf(buff, "%02d:%02d:%02d", temp_hh, mm, ss);
 			break;
 		}
 	}
 }
-
 
 void time_set(int time_num){
 	switch(position_cur){		//커서위치에 따라 변경할 값을 결정.
@@ -382,7 +389,7 @@ void time_set(int time_num){
 	if(time_num == 0)		print_LCD(0);
 	else if(time_num == 1)	print_LCD(1);
 	printf("country : %d\n", country_1);
-	LCD_goto_XY(position_cur_2, position_cur);
+	LCD_goto_XY(position_cur_2, position_cur + 2);
 }
 
 //알람 읽기(EEPROM)
